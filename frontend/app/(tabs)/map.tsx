@@ -491,9 +491,14 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 4,
   },
-  filterContainer: {
+  controlsContainer: {
     backgroundColor: '#1F2937',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 12,
+  },
+  filterContainer: {
+    flex: 1,
   },
   filterContent: {
     paddingHorizontal: 16,
@@ -518,6 +523,21 @@ const styles = StyleSheet.create({
   filterTextActive: {
     color: '#fff',
   },
+  viewToggle: {
+    flexDirection: 'row',
+    marginRight: 16,
+    backgroundColor: '#374151',
+    borderRadius: 8,
+    padding: 4,
+  },
+  viewToggleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  viewToggleButtonActive: {
+    backgroundColor: '#10B981',
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -527,6 +547,13 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 12,
     fontSize: 16,
+  },
+  mapContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  webview: {
+    flex: 1,
   },
   listContainer: {
     flex: 1,
