@@ -9,12 +9,13 @@ import {
   Modal,
   Image,
   Dimensions,
+  Platform,
 } from 'react-native';
-import MapView, { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { getAttractions, getEvents } from '../../services/api';
 import { Attraction, Event, ClusterType, MapMarker } from '../../types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView } from 'react-native-webview';
 
 const { width, height } = Dimensions.get('window');
 
