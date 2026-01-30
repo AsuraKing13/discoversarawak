@@ -1,0 +1,439 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { generateItinerary } from '../../services/api';
+
+const INTERESTS = ['Culture', 'Adventure', 'Nature', 'Foods', 'Festivals'];
+const DURATIONS = [
+  { label: '1 Day', value: 1 },
+  { label: '3 Days', value: 3 },
+  { label: '5 Days', value: 5 },
+  { label: '1 Week', value: 7 },
+];
+const BUDGETS = [
+  { label: 'Low', value: 'low', desc: 'Budget-friendly' },
+  { label: 'Medium', value: 'medium', desc: 'Balanced' },
+  { label: 'High', value: 'high', desc: 'Premium' },
+];
+
+const CLUSTER_COLORS: { [key: string]: string } = {
+  Culture: '#8B5CF6',
+  Adventure: '#EF4444',
+  Nature: '#10B981',
+  Foods: '#F59E0B',
+  Festivals: '#EC4899',
+};
+
+export default function PlanTripScreen() {
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [selectedDuration, setSelectedDuration] = useState<number>(3);
+  const [selectedBudget, setSelectedBudget] = useState<string>('medium');
+  const [generating, setGenerating] = useState(false);
+  const [generatedItinerary, setGeneratedItinerary] = useState<string | null>(null);
+
+  const toggleInterest = (interest: string) => {
+    if (selectedInterests.includes(interest)) {
+      setSelectedInterests(selectedInterests.filter((i) => i !== interest));
+    } else {
+      setSelectedInterests([...selectedInterests, interest]);
+    }
+  };
+
+  const handleGenerateItinerary = async () => {
+    if (selectedInterests.length === 0) {
+      Alert.alert('Select Interests', 'Please select at least one interest to continue.');
+      return;
+    }
+
+    setGenerating(true);
+    setGeneratedItinerary(null);
+
+    try {
+      const result = await generateItinerary(
+        selectedInterests,
+        selectedDuration,
+        selectedBudget
+      );
+      
+      setGeneratedItinerary(result.itinerary);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to generate itinerary. Please try again.');
+      console.error('Error generating itinerary:', error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleReset = () => {
+    setGeneratedItinerary(null);
+    setSelectedInterests([]);
+    setSelectedDuration(3);
+    setSelectedBudget('medium');
+  };
+
+  return (
+    <View style={styles.container}>
+      {!generatedItinerary ? (
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.formContainer}>
+          <View style={styles.header}>
+            <MaterialCommunityIcons name="routes" size={40} color="#10B981" />
+            <Text style={styles.headerTitle}>Plan Your Sarawak Trip</Text>
+            <Text style={styles.headerSubtitle}>
+              Let AI create a personalized itinerary for you
+            </Text>
+          </View>
+
+          {/* Interests Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              <Ionicons name="heart" size={20} color="#10B981" /> What interests you?
+            </Text>
+            <Text style={styles.sectionDesc}>Select one or more interests</Text>
+            
+            <View style={styles.interestsGrid}>
+              {INTERESTS.map((interest) => (
+                <TouchableOpacity
+                  key={interest}
+                  style={[
+                    styles.interestCard,
+                    selectedInterests.includes(interest) && styles.interestCardActive,
+                    {
+                      borderColor: CLUSTER_COLORS[interest] || '#6B7280',
+                      backgroundColor: selectedInterests.includes(interest)
+                        ? `${CLUSTER_COLORS[interest]}20`
+                        : '#1F2937',
+                    },
+                  ]}
+                  onPress={() => toggleInterest(interest)}
+                >
+                  {selectedInterests.includes(interest) && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={20}
+                      color={CLUSTER_COLORS[interest]}
+                      style={styles.checkmark}
+                    />
+                  )}
+                  <Text
+                    style={[
+                      styles.interestText,
+                      selectedInterests.includes(interest) && {
+                        color: CLUSTER_COLORS[interest],
+                      },
+                    ]}
+                  >
+                    {interest}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Duration Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              <Ionicons name="calendar" size={20} color="#10B981" /> Trip Duration
+            </Text>
+            <Text style={styles.sectionDesc}>How long is your trip?</Text>
+            
+            <View style={styles.durationGrid}>
+              {DURATIONS.map((duration) => (
+                <TouchableOpacity
+                  key={duration.value}
+                  style={[
+                    styles.durationCard,
+                    selectedDuration === duration.value && styles.durationCardActive,
+                  ]}
+                  onPress={() => setSelectedDuration(duration.value)}
+                >
+                  <Text
+                    style={[
+                      styles.durationText,
+                      selectedDuration === duration.value && styles.durationTextActive,
+                    ]}
+                  >
+                    {duration.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Budget Selection */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              <Ionicons name="wallet" size={20} color="#10B981" /> Budget Level
+            </Text>
+            <Text style={styles.sectionDesc}>What's your budget?</Text>
+            
+            <View style={styles.budgetContainer}>
+              {BUDGETS.map((budget) => (
+                <TouchableOpacity
+                  key={budget.value}
+                  style={[
+                    styles.budgetCard,
+                    selectedBudget === budget.value && styles.budgetCardActive,
+                  ]}
+                  onPress={() => setSelectedBudget(budget.value)}
+                >
+                  <Text
+                    style={[
+                      styles.budgetLabel,
+                      selectedBudget === budget.value && styles.budgetLabelActive,
+                    ]}
+                  >
+                    {budget.label}
+                  </Text>
+                  <Text style={styles.budgetDesc}>{budget.desc}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Generate Button */}
+          <TouchableOpacity
+            style={[styles.generateButton, generating && styles.generateButtonDisabled]}
+            onPress={handleGenerateItinerary}
+            disabled={generating}
+          >
+            {generating ? (
+              <>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={styles.generateButtonText}>Generating...</Text>
+              </>
+            ) : (
+              <>
+                <MaterialCommunityIcons name="magic-staff" size={20} color="#fff" />
+                <Text style={styles.generateButtonText}>Generate Itinerary</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      ) : (
+        <View style={styles.resultContainer}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.resultContent}
+          >
+            <View style={styles.resultHeader}>
+              <Ionicons name="checkmark-circle" size={48} color="#10B981" />
+              <Text style={styles.resultTitle}>Your Personalized Itinerary</Text>
+              <Text style={styles.resultSubtitle}>
+                {selectedDuration} day{selectedDuration > 1 ? 's' : ''} • {selectedBudget} budget
+              </Text>
+            </View>
+
+            <View style={styles.itineraryCard}>
+              <Text style={styles.itineraryText}>{generatedItinerary}</Text>
+            </View>
+
+            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+              <Ionicons name="refresh" size={20} color="#10B981" />
+              <Text style={styles.resetButtonText}>Plan Another Trip</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#111827',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  formContainer: {
+    padding: 16,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+    paddingTop: 16,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  sectionDesc: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 16,
+  },
+  interestsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  interestCard: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    position: 'relative',
+  },
+  interestCardActive: {
+    borderWidth: 2,
+  },
+  checkmark: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  interestText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  durationGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  durationCard: {
+    flex: 1,
+    minWidth: '45%',
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#1F2937',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#374151',
+  },
+  durationCardActive: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  durationText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#9CA3AF',
+  },
+  durationTextActive: {
+    color: '#fff',
+  },
+  budgetContainer: {
+    gap: 12,
+  },
+  budgetCard: {
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#1F2937',
+    borderWidth: 2,
+    borderColor: '#374151',
+  },
+  budgetCardActive: {
+    backgroundColor: '#10B98120',
+    borderColor: '#10B981',
+  },
+  budgetLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  budgetLabelActive: {
+    color: '#10B981',
+  },
+  budgetDesc: {
+    fontSize: 14,
+    color: '#9CA3AF',
+  },
+  generateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10B981',
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+    marginTop: 16,
+    marginBottom: 32,
+  },
+  generateButtonDisabled: {
+    backgroundColor: '#6B7280',
+  },
+  generateButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  resultContainer: {
+    flex: 1,
+  },
+  resultContent: {
+    padding: 16,
+  },
+  resultHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingTop: 16,
+  },
+  resultTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  resultSubtitle: {
+    fontSize: 16,
+    color: '#9CA3AF',
+  },
+  itineraryCard: {
+    backgroundColor: '#1F2937',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+  },
+  itineraryText: {
+    fontSize: 16,
+    color: '#E5E7EB',
+    lineHeight: 24,
+  },
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1F2937',
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+    marginBottom: 32,
+    borderWidth: 2,
+    borderColor: '#10B981',
+  },
+  resetButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+});
