@@ -9,7 +9,9 @@ import {
   Image,
   FlatList,
   Modal,
+  Platform,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { getAttractions, getEvents } from '../../services/api';
 import { Attraction, Event, ClusterType, MapMarker } from '../../types';
@@ -36,6 +38,7 @@ export default function MapScreen() {
   const [showEvents, setShowEvents] = useState(true);
   const [selectedItem, setSelectedItem] = useState<MapMarker | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [viewMode, setViewMode] = useState<'map' | 'grid'>('map');
 
   useEffect(() => {
     loadData();
@@ -61,6 +64,93 @@ export default function MapScreen() {
   const handleItemPress = (item: MapMarker) => {
     setSelectedItem(item);
     setShowDetails(true);
+  };
+
+  const generateMapHTML = () => {
+    const markers = [];
+    
+    // Add attractions
+    attractions.forEach((attraction) => {
+      if (attraction.latitude && attraction.longitude) {
+        const color = attraction.categories[0]
+          ? CLUSTER_COLORS[attraction.categories[0]] || CLUSTER_COLORS.All
+          : CLUSTER_COLORS.All;
+        
+        markers.push({
+          lat: attraction.latitude,
+          lng: attraction.longitude,
+          title: attraction.name,
+          description: attraction.location || '',
+          color: color,
+          type: 'attraction'
+        });
+      }
+    });
+
+    // Add events
+    if (showEvents) {
+      events.forEach((event) => {
+        if (event.latitude && event.longitude) {
+          markers.push({
+            lat: event.latitude,
+            lng: event.longitude,
+            title: event.title,
+            description: event.location_name || '',
+            color: '#FBBF24',
+            type: 'event'
+          });
+        }
+      });
+    }
+
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100vw; }
+      </style>
+    </head>
+    <body>
+      <div id="map"></div>
+      <script>
+        var map = L.map('map').setView([1.5535, 110.3593], 10);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19
+        }).addTo(map);
+
+        var markers = ${JSON.stringify(markers)};
+        
+        markers.forEach(function(marker) {
+          var icon;
+          if (marker.type === 'event') {
+            icon = L.divIcon({
+              className: 'custom-marker',
+              html: '<div style="background-color: ' + marker.color + '; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><span style="color: white; font-size: 16px;">★</span></div>',
+              iconSize: [30, 30]
+            });
+          } else {
+            icon = L.divIcon({
+              className: 'custom-marker',
+              html: '<div style="background-color: ' + marker.color + '; width: 30px; height: 30px; border-radius: 4px; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><span style="color: white; font-size: 14px;">■</span></div>',
+              iconSize: [30, 30]
+            });
+          }
+          
+          L.marker([marker.lat, marker.lng], {icon: icon})
+            .addTo(map)
+            .bindPopup('<b>' + marker.title + '</b><br>' + marker.description);
+        });
+      </script>
+    </body>
+    </html>
+    `;
   };
 
   const renderAttractionCard = ({ item }: { item: Attraction }) => {
