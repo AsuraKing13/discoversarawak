@@ -380,63 +380,92 @@ export default function MapScreen() {
         </Text>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
-        contentContainerStyle={styles.filterContent}
-      >
-        {CLUSTER_TYPES.map((cluster) => (
-          <TouchableOpacity
-            key={cluster}
-            style={[
-              styles.filterButton,
-              selectedCluster === cluster && styles.filterButtonActive,
-              { borderColor: CLUSTER_COLORS[cluster] },
-            ]}
-            onPress={() => setSelectedCluster(cluster)}
-          >
-            <Text
+      <View style={styles.controlsContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterContainer}
+          contentContainerStyle={styles.filterContent}
+        >
+          {CLUSTER_TYPES.map((cluster) => (
+            <TouchableOpacity
+              key={cluster}
               style={[
-                styles.filterText,
-                selectedCluster === cluster && styles.filterTextActive,
+                styles.filterButton,
+                selectedCluster === cluster && styles.filterButtonActive,
+                { borderColor: CLUSTER_COLORS[cluster] },
               ]}
+              onPress={() => setSelectedCluster(cluster)}
             >
-              {cluster}
+              <Text
+                style={[
+                  styles.filterText,
+                  selectedCluster === cluster && styles.filterTextActive,
+                ]}
+              >
+                {cluster}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <View style={styles.viewToggle}>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, viewMode === 'map' && styles.viewToggleButtonActive]}
+            onPress={() => setViewMode('map')}
+          >
+            <Ionicons name="map" size={20} color={viewMode === 'map' ? '#fff' : '#9CA3AF'} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.viewToggleButton, viewMode === 'grid' && styles.viewToggleButtonActive]}
+            onPress={() => setViewMode('grid')}
+          >
+            <Ionicons name="grid" size={20} color={viewMode === 'grid' ? '#fff' : '#9CA3AF'} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {viewMode === 'map' ? (
+        <View style={styles.mapContainer}>
+          <WebView
+            originWhitelist={['*']}
+            source={{ html: generateMapHTML() }}
+            style={styles.webview}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+          />
+          
+          <TouchableOpacity
+            style={styles.eventsToggle}
+            onPress={() => setShowEvents(!showEvents)}
+          >
+            <Ionicons
+              name={showEvents ? 'star' : 'star-outline'}
+              size={20}
+              color={showEvents ? '#FBBF24' : '#6B7280'}
+            />
+            <Text style={styles.eventsToggleText}>
+              {showEvents ? 'Hide Events' : 'Show Events'}
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <View style={styles.listContainer}>
-        <FlatList
-          data={allItems}
-          renderItem={({ item }) =>
-            'itemType' in item && item.itemType === 'event'
-              ? renderEventCard({ item: item as Event })
-              : renderAttractionCard({ item: item as Attraction })
-          }
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-
-        <TouchableOpacity
-          style={styles.eventsToggle}
-          onPress={() => setShowEvents(!showEvents)}
-        >
-          <Ionicons
-            name={showEvents ? 'star' : 'star-outline'}
-            size={20}
-            color={showEvents ? '#FBBF24' : '#6B7280'}
+        </View>
+      ) : (
+        <View style={styles.listContainer}>
+          <FlatList
+            data={allItems}
+            renderItem={({ item }) =>
+              'itemType' in item && item.itemType === 'event'
+                ? renderEventCard({ item: item as Event })
+                : renderAttractionCard({ item: item as Attraction })
+            }
+            keyExtractor={(item) => item.id}
+            numColumns={2}
+            columnWrapperStyle={styles.columnWrapper}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
           />
-          <Text style={styles.eventsToggleText}>
-            {showEvents ? 'Hide Events' : 'Show Events'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+        </View>
+      )}
 
       {renderDetailsModal()}
     </SafeAreaView>
