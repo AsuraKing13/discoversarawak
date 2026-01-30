@@ -64,7 +64,7 @@ class SarawakAPITester:
                 if isinstance(data, list) and len(data) > 0:
                     # Check structure of first attraction
                     first_attraction = data[0]
-                    required_fields = ['id', 'name', 'location', 'categories', 'latitude', 'longitude', 'image_url']
+                    required_fields = ['_id', 'name', 'location', 'categories', 'latitude', 'longitude', 'image_url']
                     missing_fields = [field for field in required_fields if field not in first_attraction]
                     
                     if not missing_fields:
