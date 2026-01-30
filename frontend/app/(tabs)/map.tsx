@@ -427,13 +427,26 @@ export default function MapScreen() {
 
       {viewMode === 'map' ? (
         <View style={styles.mapContainer}>
-          <WebView
-            originWhitelist={['*']}
-            source={{ html: generateMapHTML() }}
-            style={styles.webview}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-          />
+          {Platform.OS === 'web' ? (
+            <iframe
+              srcDoc={generateMapHTML()}
+              style={{
+                flex: 1,
+                width: '100%',
+                height: '100%',
+                border: 'none',
+              }}
+              title="Sarawak Tourism Map"
+            />
+          ) : (
+            <WebView
+              originWhitelist={['*']}
+              source={{ html: generateMapHTML() }}
+              style={styles.webview}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+            />
+          )}
           
           <TouchableOpacity
             style={styles.eventsToggle}
