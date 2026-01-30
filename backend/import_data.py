@@ -79,7 +79,7 @@ async def import_attractions():
     
     # Download CSV
     url = "https://customer-assets.emergentagent.com/job_discover-sarawak/artifacts/z0wct5ev_clusters_rows.csv"
-    rows = await asyncio.to_thread(download_csv, url)
+    rows = download_csv(url)
     
     if not rows:
         logger.error("No data to import for attractions")
@@ -138,7 +138,7 @@ async def import_events():
     
     # Download CSV
     url = "https://customer-assets.emergentagent.com/job_discover-sarawak/artifacts/qxxync66_events_rows.csv"
-    rows = await asyncio.to_thread(download_csv, url)
+    rows = download_csv(url)
     
     if not rows:
         logger.error("No data to import for events")
@@ -191,7 +191,7 @@ async def import_analytics():
     
     # Download CSV
     url = "https://customer-assets.emergentagent.com/job_discover-sarawak/artifacts/kov15g3r_visitor_analytics_rows.csv"
-    rows = await asyncio.to_thread(download_csv, url)
+    rows = download_csv(url)
     
     if not rows:
         logger.error("No data to import for analytics")
@@ -230,7 +230,7 @@ async def import_holidays():
     
     # Download CSV
     url = "https://customer-assets.emergentagent.com/job_discover-sarawak/artifacts/luc2irri_public_holidays_rows.csv"
-    rows = await asyncio.to_thread(download_csv, url)
+    rows = download_csv(url)
     
     if not rows:
         logger.error("No data to import for holidays")
