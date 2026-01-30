@@ -89,84 +89,124 @@ export default function MapScreen() {
     setSelectedCluster(cluster);
   };
 
-  const renderMarkers = () => {
-    const markers: JSX.Element[] = [];
+  const renderAttractionCard = (attraction: Attraction) => {
+    const color = attraction.categories[0]
+      ? CLUSTER_COLORS[attraction.categories[0]] || CLUSTER_COLORS.All
+      : CLUSTER_COLORS.All;
 
-    // Add attraction markers (square pins)
-    attractions.forEach((attraction) => {
-      if (!attraction.latitude || !attraction.longitude) return;
-
-      const markerData: MapMarker = {
-        id: attraction.id,
-        type: 'attraction',
-        title: attraction.name,
-        description: attraction.description,
-        latitude: attraction.latitude,
-        longitude: attraction.longitude,
-        categories: attraction.categories,
-        image_url: attraction.image_url,
-      };
-
-      const color = attraction.categories[0]
-        ? CLUSTER_COLORS[attraction.categories[0]] || CLUSTER_COLORS.All
-        : CLUSTER_COLORS.All;
-
-      markers.push(
-        <Marker
-          key={`attraction-${attraction.id}`}
-          coordinate={{
-            latitude: attraction.latitude,
-            longitude: attraction.longitude,
-          }}
-          title={attraction.name}
-          description={attraction.location}
-          onPress={() => handleMarkerPress(markerData)}
-        >
-          <View style={[styles.markerSquare, { backgroundColor: color }]}>
-            <MaterialCommunityIcons name="map-marker" size={20} color="#fff" />
+    return (
+      <TouchableOpacity
+        key={attraction.id}
+        style={styles.card}
+        onPress={() => {
+          const markerData: MapMarker = {
+            id: attraction.id,
+            type: 'attraction',
+            title: attraction.name,
+            description: attraction.description,
+            latitude: attraction.latitude || 0,
+            longitude: attraction.longitude || 0,
+            categories: attraction.categories,
+            image_url: attraction.image_url,
+          };
+          handleMarkerPress(markerData);
+        }}
+      >
+        {attraction.image_url ? (
+          <Image source={{ uri: attraction.image_url }} style={styles.cardImage} />
+        ) : (
+          <View style={[styles.cardImagePlaceholder, { backgroundColor: color + '20' }]}>
+            <MaterialCommunityIcons name="map-marker" size={48} color={color} />
           </View>
-        </Marker>
-      );
-    });
-
-    // Add event markers (star pins)
-    if (showEvents) {
-      events.forEach((event) => {
-        if (!event.latitude || !event.longitude) return;
-
-        const markerData: MapMarker = {
-          id: event.id,
-          type: 'event',
-          title: event.title,
-          description: event.description,
-          latitude: event.latitude,
-          longitude: event.longitude,
-          category: event.category,
-          image_url: event.image_url,
-          start_date: event.start_date,
-          end_date: event.end_date,
-        };
-
-        markers.push(
-          <Marker
-            key={`event-${event.id}`}
-            coordinate={{
-              latitude: event.latitude,
-              longitude: event.longitude,
-            }}
-            title={event.title}
-            description={event.location_name}
-            onPress={() => handleMarkerPress(markerData)}
-          >
-            <View style={styles.markerStar}>
-              <Ionicons name="star" size={24} color="#FBBF24" />
+        )}
+        
+        <View style={styles.cardContent}>
+          <View style={[styles.markerIndicator, { backgroundColor: color }]}>
+            <MaterialCommunityIcons name="map-marker" size={12} color="#fff" />
+          </View>
+          
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {attraction.name}
+          </Text>
+          
+          {attraction.location && (
+            <View style={styles.cardLocation}>
+              <Ionicons name="location" size={14} color="#9CA3AF" />
+              <Text style={styles.cardLocationText} numberOfLines={1}>
+                {attraction.location}
+              </Text>
             </View>
-          </Marker>
-        );
-      });
-    }
+          )}
+          
+          <View style={styles.cardCategories}>
+            {attraction.categories.slice(0, 2).map((cat) => (
+              <View
+                key={cat}
+                style={[styles.cardCategoryBadge, { backgroundColor: CLUSTER_COLORS[cat] || '#6B7280' }]}
+              >
+                <Text style={styles.cardCategoryText}>{cat}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
-    return markers;
+  const renderEventCard = (event: Event) => {
+    return (
+      <TouchableOpacity
+        key={event.id}
+        style={styles.card}
+        onPress={() => {
+          const markerData: MapMarker = {
+            id: event.id,
+            type: 'event',
+            title: event.title,
+            description: event.description,
+            latitude: event.latitude || 0,
+            longitude: event.longitude || 0,
+            category: event.category,
+            image_url: event.image_url,
+            start_date: event.start_date,
+            end_date: event.end_date,
+          };
+          handleMarkerPress(markerData);
+        }}
+      >
+        {event.image_url && (
+          <Image source={{ uri: event.image_url }} style={styles.cardImage} />
+        )}
+        
+        <View style={styles.cardContent}>
+          <View style={[styles.markerIndicator, { backgroundColor: '#FBBF24' }]}>
+            <Ionicons name="star" size={12} color="#fff" />
+          </View>
+          
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {event.title}
+          </Text>
+          
+          {event.location_name && (
+            <View style={styles.cardLocation}>
+              <Ionicons name="location" size={14} color="#9CA3AF" />
+              <Text style={styles.cardLocationText} numberOfLines={1}>
+                {event.location_name}
+              </Text>
+            </View>
+          )}
+          
+          {event.start_date && (
+            <View style={styles.cardLocation}>
+              <Ionicons name="calendar" size={14} color="#9CA3AF" />
+              <Text style={styles.cardLocationText}>
+                {new Date(event.start_date).toLocaleDateString()}
+              </Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   const renderClusterFilters = () => {
