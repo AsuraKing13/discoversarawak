@@ -92,6 +92,24 @@ class FavoriteCreate(BaseModel):
     user_id: str
     attraction_id: str
 
+class ItineraryRequest(BaseModel):
+    interests: List[str] = Field(..., description="List of interests (Culture, Adventure, Nature, Foods, Festivals)")
+    duration: int = Field(..., description="Duration in days (1, 3, 5, 7)")
+    budget: str = Field(..., description="Budget level (low, medium, high)")
+    user_id: Optional[str] = None
+
+class ItineraryResponse(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='_id')
+    user_id: Optional[str] = None
+    itinerary: str
+    interests: List[str]
+    duration: int
+    budget: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    class Config:
+        populate_by_name = True
+
 
 # ============ ROUTES ============
 
