@@ -31,7 +31,7 @@ db = client[os.environ['DB_NAME']]
 IMAGES_DIR = ROOT_DIR / 'static' / 'images'
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 
-async def download_csv(url: str) -> list:
+def download_csv(url: str) -> list:
     """Download and parse CSV from URL"""
     try:
         response = requests.get(url)
