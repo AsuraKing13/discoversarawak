@@ -287,6 +287,116 @@ async def health_check():
             "error": str(e)
         }
 
+# AI Itinerary Generator endpoint
+@api_router.post("/itinerary/generate", response_model=ItineraryResponse)
+async def generate_itinerary(request: ItineraryRequest):
+    """Generate AI-powered personalized itinerary for Sarawak"""
+    try:
+        # Get attractions based on interests
+        query = {}
+        if request.interests and len(request.interests) > 0:
+            query['categories'] = {'$in': request.interests}
+        
+        attractions = await db.attractions.find(query).limit(50).to_list(50)
+        events = await db.events.find({}).limit(20).to_list(20)
+        holidays = await db.public_holidays.find({}).to_list(20)
+        
+        # Prepare context for AI
+        attractions_text = "\n".join([
+            f"- {attr['name']} ({', '.join(attr.get('categories', []))}): {attr.get('location', 'Sarawak')} - {attr.get('description', '')[:100]}"
+            for attr in attractions[:30]
+        ])
+        
+        events_text = "\n".join([
+            f"- {evt['title']}: {evt.get('start_date', 'TBD')} at {evt.get('location_name', 'Sarawak')}"
+            for evt in events[:10]
+        ])
+        
+        holidays_text = "\n".join([
+            f"- {hol['name']}: {hol['date']}"
+            for hol in holidays[:10]
+        ])
+        
+        budget_info = {
+            "low": "Budget-friendly options, local food, public transport, free/affordable attractions",
+            "medium": "Mix of budget and mid-range, some guided tours, comfortable accommodation",
+            "high": "Premium experiences, private tours, luxury dining, exclusive attractions"
+        }
+        
+        # Create AI prompt
+        prompt = f"""You are a professional travel planner for Sarawak, Malaysia. Create a detailed {request.duration}-day itinerary based on the following requirements:
+
+**Tourist Interests:** {', '.join(request.interests)}
+**Duration:** {request.duration} days
+**Budget Level:** {request.budget.upper()} - {budget_info.get(request.budget, budget_info['medium'])}
+
+**Available Attractions in Sarawak:**
+{attractions_text}
+
+**Upcoming Events:**
+{events_text}
+
+**Public Holidays to Consider:**
+{holidays_text}
+
+**Instructions:**
+1. Create a day-by-day itinerary (Day 1, Day 2, etc.)
+2. For each day, include:
+   - Morning, afternoon, and evening activities
+   - Specific attractions from the list above that match the interests
+   - Estimated costs in Malaysian Ringgit (RM) based on budget level
+   - Practical tips (transport, timing, what to bring)
+3. Include a mix of activities that match the selected interests
+4. Consider travel time between locations
+5. Add cultural insights and local tips
+6. Include food recommendations (where to eat local cuisine)
+7. Provide a total estimated cost breakdown at the end
+
+Format the itinerary in a clear, organized manner with proper headings and bullet points."""
+
+        # Initialize AI chat
+        emergent_key = os.getenv('EMERGENT_LLM_KEY')
+        chat = LlmChat(
+            api_key=emergent_key,
+            session_id=f"itinerary_{uuid.uuid4()}",
+            system_message="You are an expert travel planner specializing in Sarawak, Malaysia tourism."
+        )
+        
+        # Use Gemini for generation
+        chat.with_model("gemini", "gemini-2.5-pro")
+        
+        # Generate itinerary
+        user_message = UserMessage(text=prompt)
+        ai_response = await chat.send_message(user_message)
+        
+        # Create itinerary response
+        itinerary_obj = ItineraryResponse(
+            user_id=request.user_id,
+            itinerary=ai_response,
+            interests=request.interests,
+            duration=request.duration,
+            budget=request.budget
+        )
+        
+        # Save to database
+        await db.itineraries.insert_one(itinerary_obj.dict(by_alias=True))
+        
+        return itinerary_obj
+        
+    except Exception as e:
+        logging.error(f"Error generating itinerary: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate itinerary: {str(e)}")
+
+@api_router.get("/itinerary/{user_id}", response_model=List[ItineraryResponse])
+async def get_user_itineraries(user_id: str):
+    """Get all itineraries for a user"""
+    try:
+        itineraries = await db.itineraries.find({'user_id': user_id}).sort('created_at', -1).to_list(100)
+        return [ItineraryResponse(**itin) for itin in itineraries]
+    except Exception as e:
+        logging.error(f"Error fetching itineraries: {e}")
+        return []
+
 # Include the router in the main app
 app.include_router(api_router)
 
