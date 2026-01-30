@@ -149,3 +149,34 @@ export const checkHealth = async () => {
     return { status: 'unhealthy', error };
   }
 };
+
+// AI Itinerary Generator
+export const generateItinerary = async (
+  interests: string[],
+  duration: number,
+  budget: string,
+  userId?: string
+) => {
+  try {
+    const response = await api.post('/itinerary/generate', {
+      interests,
+      duration,
+      budget,
+      user_id: userId,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error generating itinerary:', error);
+    throw error;
+  }
+};
+
+export const getUserItineraries = async (userId: string) => {
+  try {
+    const response = await api.get(`/itinerary/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching itineraries:', error);
+    return [];
+  }
+};
