@@ -159,7 +159,7 @@ class SarawakAPITester:
                 if isinstance(data, list) and len(data) > 0:
                     # Check structure of first event
                     first_event = data[0]
-                    required_fields = ['id', 'title', 'start_date', 'end_date']
+                    required_fields = ['_id', 'title', 'start_date', 'end_date']
                     missing_fields = [field for field in required_fields if field not in first_event]
                     
                     if not missing_fields:
