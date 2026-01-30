@@ -1,31 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
-  StyleSheet,
-  ActivityIndicator,
-  TouchableOpacity,
   Text,
+  StyleSheet,
   ScrollView,
-  Modal,
+  TouchableOpacity,
+  ActivityIndicator,
   Image,
-  Dimensions,
-  Platform,
+  FlatList,
+  Modal,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { getAttractions, getEvents } from '../../services/api';
 import { Attraction, Event, ClusterType, MapMarker } from '../../types';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
-
-const { width, height } = Dimensions.get('window');
-
-// Sarawak coordinates (center of Kuching)
-const INITIAL_REGION = {
-  latitude: 1.5535,
-  longitude: 110.3593,
-  latitudeDelta: 2.5,
-  longitudeDelta: 2.5,
-};
 
 // Cluster colors
 const CLUSTER_COLORS: { [key: string]: string } = {
@@ -46,9 +34,8 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedCluster, setSelectedCluster] = useState<ClusterType>('All');
   const [showEvents, setShowEvents] = useState(true);
-  const [selectedMarker, setSelectedMarker] = useState<MapMarker | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MapMarker | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     loadData();
@@ -57,22 +44,13 @@ export default function MapScreen() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Load attractions
       const attractionsData = await getAttractions(
         selectedCluster === 'All' ? undefined : selectedCluster
       );
-      
-      // Filter out attractions without coordinates
-      const validAttractions = attractionsData.filter(
-        (a) => a.latitude && a.longitude
-      );
-      
-      setAttractions(validAttractions);
+      setAttractions(attractionsData);
 
-      // Load events
       const eventsData = await getEvents();
-      const validEvents = eventsData.filter((e) => e.latitude && e.longitude);
-      setEvents(validEvents);
+      setEvents(eventsData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -80,40 +58,35 @@ export default function MapScreen() {
     }
   };
 
-  const handleMarkerPress = (marker: MapMarker) => {
-    setSelectedMarker(marker);
+  const handleItemPress = (item: MapMarker) => {
+    setSelectedItem(item);
     setShowDetails(true);
   };
 
-  const handleClusterPress = (cluster: ClusterType) => {
-    setSelectedCluster(cluster);
-  };
-
-  const renderAttractionCard = (attraction: Attraction) => {
-    const color = attraction.categories[0]
-      ? CLUSTER_COLORS[attraction.categories[0]] || CLUSTER_COLORS.All
+  const renderAttractionCard = ({ item }: { item: Attraction }) => {
+    const color = item.categories[0]
+      ? CLUSTER_COLORS[item.categories[0]] || CLUSTER_COLORS.All
       : CLUSTER_COLORS.All;
 
     return (
       <TouchableOpacity
-        key={attraction.id}
         style={styles.card}
         onPress={() => {
           const markerData: MapMarker = {
-            id: attraction.id,
+            id: item.id,
             type: 'attraction',
-            title: attraction.name,
-            description: attraction.description,
-            latitude: attraction.latitude || 0,
-            longitude: attraction.longitude || 0,
-            categories: attraction.categories,
-            image_url: attraction.image_url,
+            title: item.name,
+            description: item.description,
+            latitude: item.latitude || 0,
+            longitude: item.longitude || 0,
+            categories: item.categories,
+            image_url: item.image_url,
           };
-          handleMarkerPress(markerData);
+          handleItemPress(markerData);
         }}
       >
-        {attraction.image_url ? (
-          <Image source={{ uri: attraction.image_url }} style={styles.cardImage} />
+        {item.image_url ? (
+          <Image source={{ uri: item.image_url }} style={styles.cardImage} />
         ) : (
           <View style={[styles.cardImagePlaceholder, { backgroundColor: color + '20' }]}>
             <MaterialCommunityIcons name="map-marker" size={48} color={color} />
@@ -122,24 +95,24 @@ export default function MapScreen() {
         
         <View style={styles.cardContent}>
           <View style={[styles.markerIndicator, { backgroundColor: color }]}>
-            <MaterialCommunityIcons name="map-marker" size={12} color="#fff" />
+            <MaterialCommunityIcons name="square" size={12} color="#fff" />
           </View>
           
           <Text style={styles.cardTitle} numberOfLines={2}>
-            {attraction.name}
+            {item.name}
           </Text>
           
-          {attraction.location && (
+          {item.location && (
             <View style={styles.cardLocation}>
               <Ionicons name="location" size={14} color="#9CA3AF" />
               <Text style={styles.cardLocationText} numberOfLines={1}>
-                {attraction.location}
+                {item.location}
               </Text>
             </View>
           )}
           
           <View style={styles.cardCategories}>
-            {attraction.categories.slice(0, 2).map((cat) => (
+            {item.categories.slice(0, 2).map((cat) => (
               <View
                 key={cat}
                 style={[styles.cardCategoryBadge, { backgroundColor: CLUSTER_COLORS[cat] || '#6B7280' }]}
@@ -153,29 +126,28 @@ export default function MapScreen() {
     );
   };
 
-  const renderEventCard = (event: Event) => {
+  const renderEventCard = ({ item }: { item: Event }) => {
     return (
       <TouchableOpacity
-        key={event.id}
         style={styles.card}
         onPress={() => {
           const markerData: MapMarker = {
-            id: event.id,
+            id: item.id,
             type: 'event',
-            title: event.title,
-            description: event.description,
-            latitude: event.latitude || 0,
-            longitude: event.longitude || 0,
-            category: event.category,
-            image_url: event.image_url,
-            start_date: event.start_date,
-            end_date: event.end_date,
+            title: item.title,
+            description: item.description,
+            latitude: item.latitude || 0,
+            longitude: item.longitude || 0,
+            category: item.category,
+            image_url: item.image_url,
+            start_date: item.start_date,
+            end_date: item.end_date,
           };
-          handleMarkerPress(markerData);
+          handleItemPress(markerData);
         }}
       >
-        {event.image_url && (
-          <Image source={{ uri: event.image_url }} style={styles.cardImage} />
+        {item.image_url && (
+          <Image source={{ uri: item.image_url }} style={styles.cardImage} />
         )}
         
         <View style={styles.cardContent}>
@@ -184,23 +156,23 @@ export default function MapScreen() {
           </View>
           
           <Text style={styles.cardTitle} numberOfLines={2}>
-            {event.title}
+            {item.title}
           </Text>
           
-          {event.location_name && (
+          {item.location_name && (
             <View style={styles.cardLocation}>
               <Ionicons name="location" size={14} color="#9CA3AF" />
               <Text style={styles.cardLocationText} numberOfLines={1}>
-                {event.location_name}
+                {item.location_name}
               </Text>
             </View>
           )}
           
-          {event.start_date && (
+          {item.start_date && (
             <View style={styles.cardLocation}>
               <Ionicons name="calendar" size={14} color="#9CA3AF" />
               <Text style={styles.cardLocationText}>
-                {new Date(event.start_date).toLocaleDateString()}
+                {new Date(item.start_date).toLocaleDateString()}
               </Text>
             </View>
           )}
@@ -209,42 +181,10 @@ export default function MapScreen() {
     );
   };
 
-  const renderClusterFilters = () => {
-    return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
-        contentContainerStyle={styles.filterContent}
-      >
-        {CLUSTER_TYPES.map((cluster) => (
-          <TouchableOpacity
-            key={cluster}
-            style={[
-              styles.filterButton,
-              selectedCluster === cluster && styles.filterButtonActive,
-              { borderColor: CLUSTER_COLORS[cluster] },
-            ]}
-            onPress={() => handleClusterPress(cluster)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                selectedCluster === cluster && styles.filterTextActive,
-              ]}
-            >
-              {cluster}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    );
-  };
-
   const renderDetailsModal = () => {
-    if (!selectedMarker) return null;
+    if (!selectedItem) return null;
 
-    const isEvent = selectedMarker.type === 'event';
+    const isEvent = selectedItem.type === 'event';
 
     return (
       <Modal
@@ -263,9 +203,9 @@ export default function MapScreen() {
             </TouchableOpacity>
 
             <ScrollView>
-              {selectedMarker.image_url && (
+              {selectedItem.image_url && (
                 <Image
-                  source={{ uri: selectedMarker.image_url }}
+                  source={{ uri: selectedItem.image_url }}
                   style={styles.modalImage}
                   resizeMode="cover"
                 />
@@ -283,11 +223,11 @@ export default function MapScreen() {
                   </Text>
                 </View>
 
-                <Text style={styles.modalTitle}>{selectedMarker.title}</Text>
+                <Text style={styles.modalTitle}>{selectedItem.title}</Text>
 
-                {selectedMarker.categories && selectedMarker.categories.length > 0 && (
+                {selectedItem.categories && selectedItem.categories.length > 0 && (
                   <View style={styles.categoryContainer}>
-                    {selectedMarker.categories.map((cat) => (
+                    {selectedItem.categories.map((cat) => (
                       <View
                         key={cat}
                         style={[
@@ -301,34 +241,22 @@ export default function MapScreen() {
                   </View>
                 )}
 
-                {selectedMarker.description && (
-                  <Text style={styles.modalDescription}>{selectedMarker.description}</Text>
+                {selectedItem.description && (
+                  <Text style={styles.modalDescription}>{selectedItem.description}</Text>
                 )}
 
-                {isEvent && selectedMarker.start_date && (
+                {isEvent && selectedItem.start_date && (
                   <View style={styles.dateContainer}>
                     <Ionicons name="calendar" size={16} color="#6B7280" />
                     <Text style={styles.dateText}>
-                      {new Date(selectedMarker.start_date).toLocaleDateString('en-US', {
+                      {new Date(selectedItem.start_date).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
                       })}
-                      {selectedMarker.end_date &&
-                        selectedMarker.end_date !== selectedMarker.start_date &&
-                        ` - ${new Date(selectedMarker.end_date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}`}
                     </Text>
                   </View>
                 )}
-
-                <TouchableOpacity style={styles.favoriteButton}>
-                  <Ionicons name="heart-outline" size={20} color="#EF4444" />
-                  <Text style={styles.favoriteButtonText}>Add to Favorites</Text>
-                </TouchableOpacity>
               </View>
             </ScrollView>
           </View>
@@ -336,6 +264,22 @@ export default function MapScreen() {
       </Modal>
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10B981" />
+          <Text style={styles.loadingText}>Loading attractions...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const allItems = [
+    ...attractions.map(a => ({ ...a, itemType: 'attraction' as const })),
+    ...(showEvents ? events.map(e => ({ ...e, itemType: 'event' as const })) : [])
+  ];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -346,26 +290,48 @@ export default function MapScreen() {
         </Text>
       </View>
 
-      {renderClusterFilters()}
-
-      <View style={styles.mapContainer}>
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#10B981" />
-            <Text style={styles.loadingText}>Loading attractions...</Text>
-          </View>
-        ) : (
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            initialRegion={INITIAL_REGION}
-            provider={PROVIDER_GOOGLE}
-            showsUserLocation
-            showsMyLocationButton
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterContainer}
+        contentContainerStyle={styles.filterContent}
+      >
+        {CLUSTER_TYPES.map((cluster) => (
+          <TouchableOpacity
+            key={cluster}
+            style={[
+              styles.filterButton,
+              selectedCluster === cluster && styles.filterButtonActive,
+              { borderColor: CLUSTER_COLORS[cluster] },
+            ]}
+            onPress={() => setSelectedCluster(cluster)}
           >
-            {renderMarkers()}
-          </MapView>
-        )}
+            <Text
+              style={[
+                styles.filterText,
+                selectedCluster === cluster && styles.filterTextActive,
+              ]}
+            >
+              {cluster}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <View style={styles.listContainer}>
+        <FlatList
+          data={allItems}
+          renderItem={({ item }) =>
+            'itemType' in item && item.itemType === 'event'
+              ? renderEventCard({ item: item as Event })
+              : renderAttractionCard({ item: item as Attraction })
+          }
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
 
         <TouchableOpacity
           style={styles.eventsToggle}
@@ -433,38 +399,87 @@ const styles = StyleSheet.create({
   filterTextActive: {
     color: '#fff',
   },
-  mapContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  map: {
-    flex: 1,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#111827',
   },
   loadingText: {
     color: '#9CA3AF',
     marginTop: 12,
     fontSize: 16,
   },
-  markerSquare: {
-    width: 32,
-    height: 32,
+  listContainer: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+  },
+  card: {
+    backgroundColor: '#1F2937',
+    borderRadius: 12,
+    marginBottom: 16,
+    overflow: 'hidden',
+    width: '48%',
+  },
+  cardImage: {
+    width: '100%',
+    height: 120,
+  },
+  cardImagePlaceholder: {
+    width: '100%',
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardContent: {
+    padding: 12,
+  },
+  markerIndicator: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
     borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
   },
-  markerStar: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+    paddingRight: 28,
+  },
+  cardLocation: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
+  },
+  cardLocationText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    flex: 1,
+  },
+  cardCategories: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  cardCategoryBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  cardCategoryText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
   },
   eventsToggle: {
     position: 'absolute',
@@ -494,7 +509,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: height * 0.8,
+    maxHeight: '80%',
   },
   closeButton: {
     position: 'absolute',
@@ -568,21 +583,5 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 14,
     color: '#6B7280',
-  },
-  favoriteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FEE2E2',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  favoriteButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#EF4444',
   },
 });
