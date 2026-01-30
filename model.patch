@@ -1,0 +1,143 @@
+diff --git a/test_result.md b/test_result.md
+index 187cba4..05596e4 100644
+--- a/test_result.md
++++ b/test_result.md
+@@ -100,4 +100,135 @@
+ 
+ #====================================================================================================
+ # Testing Data - Main Agent and testing sub agent both should log testing data below this section
+-#====================================================================================================
+\ No newline at end of file
++#====================================================================================================
++
++user_problem_statement: "Test the Sarawak Tourism Platform backend API endpoints including health check, attractions, events, analytics, and holidays with various filters"
++
++backend:
++  - task: "Health Check API"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "high"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Health check endpoint working correctly. Returns status 'healthy', database connection confirmed, attractions count: 100, events count: 74"
++
++  - task: "Attractions API - Basic Functionality"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "high"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Attractions endpoint working correctly. Retrieved 100 attractions with proper structure including _id, name, location, categories, latitude, longitude, image_url fields"
++
++  - task: "Attractions API - Category Filtering"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "high"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Category filtering working correctly. Culture filter returned 24 attractions, Nature filter returned 32 attractions, all properly filtered"
++
++  - task: "Attractions API - Limit Parameter"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "medium"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Limit parameter working correctly. Requested limit=5 and received exactly 5 attractions"
++
++  - task: "Events API - Basic Functionality"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "high"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Events endpoint working correctly. Retrieved 74 events with proper structure including _id, title, start_date, end_date fields"
++
++  - task: "Events API - Category Filtering"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "medium"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Events category filtering working correctly. Festival filter returned 32 events"
++
++  - task: "Analytics API"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "high"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Analytics endpoint working correctly. Retrieved 100 analytics records with proper structure including year, month, country, visitor_type, count fields"
++
++  - task: "Holidays API"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "high"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Holidays endpoint working correctly. Retrieved 18 holidays with proper structure including date and name fields. Year filtering also tested successfully"
++
++  - task: "Individual Attraction Retrieval"
++    implemented: true
++    working: true
++    file: "backend/server.py"
++    stuck_count: 0
++    priority: "medium"
++    needs_retesting: false
++    status_history:
++        - working: true
++          agent: "testing"
++          comment: "Individual attraction retrieval by ID working correctly. Tested with ID 002f33dd-6e88-4032-b14a-0fd08cd8dc8b and received proper attraction data"
++
++frontend:
++  # No frontend testing performed as per instructions
++
++metadata:
++  created_by: "testing_agent"
++  version: "1.0"
++  test_sequence: 1
++  run_ui: false
++
++test_plan:
++  current_focus:
++    - "All backend API endpoints tested successfully"
++  stuck_tasks: []
++  test_all: true
++  test_priority: "high_first"
++
++agent_communication:
++    - agent: "testing"
++      message: "Completed comprehensive testing of all Sarawak Tourism Platform backend API endpoints. All 9 test scenarios passed with 100% success rate. Created backend_test.py for automated testing. Fixed minor issue with field name expectations (_id vs id). All endpoints returning proper data structures and counts match expected values: 100 attractions, 74 events, 100 analytics records, 18 holidays."
+\ No newline at end of file
