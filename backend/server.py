@@ -133,6 +133,172 @@ class SessionDataResponse(BaseModel):
     session_token: str
 
 
+# ============ AUTHENTICATION HELPER FUNCTIONS ============
+
+async def get_session_token_from_request(
+    session_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = None
+) -> Optional[str]:
+    """Extract session token from cookie or Authorization header"""
+    if session_token:
+        return session_token
+    
+    if authorization and authorization.startswith("Bearer "):
+        return authorization.replace("Bearer ", "")
+    
+    return None
+
+async def get_current_user(
+    session_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = None
+) -> Optional[User]:
+    """Get current authenticated user from session token"""
+    token = await get_session_token_from_request(session_token, authorization)
+    
+    if not token:
+        return None
+    
+    # Find session
+    session = await db.user_sessions.find_one(
+        {"session_token": token},
+        {"_id": 0}
+    )
+    
+    if not session:
+        return None
+    
+    # Check if session is expired
+    expires_at = session["expires_at"]
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < datetime.now(timezone.utc):
+        # Session expired, delete it
+        await db.user_sessions.delete_one({"session_token": token})
+        return None
+    
+    # Get user
+    user_doc = await db.users.find_one(
+        {"user_id": session["user_id"]},
+        {"_id": 0}
+    )
+    
+    if not user_doc:
+        return None
+    
+    return User(**user_doc)
+
+
+# ============ AUTHENTICATION ROUTES ============
+
+@api_router.post("/auth/session")
+async def create_session(
+    session_id: str,
+    response: Response
+):
+    """Exchange session_id for session_token and user data"""
+    try:
+        # Call Emergent Auth API to get user data
+        async with httpx.AsyncClient() as client:
+            auth_response = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id},
+                timeout=10.0
+            )
+            
+            if auth_response.status_code != 200:
+                raise HTTPException(status_code=401, detail="Invalid session ID")
+            
+            user_data = auth_response.json()
+        
+        # Generate custom user_id
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        
+        # Check if user already exists
+        existing_user = await db.users.find_one(
+            {"email": user_data["email"]},
+            {"_id": 0}
+        )
+        
+        if existing_user:
+            user_id = existing_user["user_id"]
+        else:
+            # Create new user
+            new_user = {
+                "user_id": user_id,
+                "email": user_data["email"],
+                "name": user_data["name"],
+                "picture": user_data.get("picture"),
+                "created_at": datetime.now(timezone.utc)
+            }
+            await db.users.insert_one(new_user)
+        
+        # Create session
+        session_token = user_data["session_token"]
+        session = {
+            "user_id": user_id,
+            "session_token": session_token,
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.user_sessions.insert_one(session)
+        
+        # Set httpOnly cookie
+        response.set_cookie(
+            key="session_token",
+            value=session_token,
+            httponly=True,
+            secure=True,
+            samesite="none",
+            max_age=7 * 24 * 60 * 60,  # 7 days
+            path="/"
+        )
+        
+        # Return user data with custom user_id
+        return SessionDataResponse(
+            id=user_id,
+            email=user_data["email"],
+            name=user_data["name"],
+            picture=user_data.get("picture"),
+            session_token=session_token
+        )
+        
+    except Exception as e:
+        logging.error(f"Error creating session: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create session: {str(e)}")
+
+@api_router.get("/auth/me")
+async def get_me(
+    session_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = None
+):
+    """Get current authenticated user"""
+    user = await get_current_user(session_token, authorization)
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    return user
+
+@api_router.post("/auth/logout")
+async def logout(
+    response: Response,
+    session_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = None
+):
+    """Logout user"""
+    token = await get_session_token_from_request(session_token, authorization)
+    
+    if token:
+        # Delete session from database
+        await db.user_sessions.delete_one({"session_token": token})
+    
+    # Clear cookie
+    response.delete_cookie(key="session_token", path="/")
+    
+    return {"message": "Logged out successfully"}
+
+
 # ============ ROUTES ============
 
 @api_router.get("/")
