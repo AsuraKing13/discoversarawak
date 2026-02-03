@@ -111,6 +111,27 @@ class ItineraryResponse(BaseModel):
     class Config:
         populate_by_name = True
 
+# Authentication Models
+class User(BaseModel):
+    user_id: str
+    email: str
+    name: str
+    picture: Optional[str] = None
+    created_at: datetime
+
+class UserSession(BaseModel):
+    user_id: str
+    session_token: str
+    expires_at: datetime
+    created_at: datetime
+
+class SessionDataResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    picture: Optional[str]
+    session_token: str
+
 
 # ============ ROUTES ============
 
