@@ -550,8 +550,8 @@ Format the itinerary in a clear, organized manner with proper headings and bulle
             system_message="You are an expert travel planner specializing in Sarawak, Malaysia tourism."
         )
         
-        # Use Gemini for generation
-        chat.with_model("gemini", "gemini-2.5-pro")
+        # Use Gemini Flash for cost-effectiveness
+        chat.with_model("gemini", "gemini-2.5-flash")
         
         # Generate itinerary
         user_message = UserMessage(text=prompt)
