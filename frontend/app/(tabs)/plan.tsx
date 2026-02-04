@@ -419,27 +419,44 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  resultContainer: {
+  modalContainer: {
     flex: 1,
+    backgroundColor: '#111827',
   },
-  resultContent: {
-    padding: 16,
+  modalHeader: {
+    backgroundColor: '#1F2937',
+    paddingTop: 60,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#374151',
   },
-  resultHeader: {
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+    padding: 8,
+  },
+  modalHeaderContent: {
     alignItems: 'center',
-    marginBottom: 24,
-    paddingTop: 16,
   },
-  resultTitle: {
+  modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
     marginTop: 16,
     marginBottom: 8,
   },
-  resultSubtitle: {
+  modalSubtitle: {
     fontSize: 16,
     color: '#9CA3AF',
+  },
+  modalScrollView: {
+    flex: 1,
+  },
+  modalContent: {
+    padding: 20,
   },
   itineraryCard: {
     backgroundColor: '#1F2937',
@@ -452,7 +469,13 @@ const styles = StyleSheet.create({
     color: '#E5E7EB',
     lineHeight: 24,
   },
-  resetButton: {
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 32,
+  },
+  modalActionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -460,12 +483,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     gap: 8,
-    marginBottom: 32,
     borderWidth: 2,
     borderColor: '#10B981',
   },
-  resetButtonText: {
-    fontSize: 16,
+  modalActionButtonPrimary: {
+    backgroundColor: '#10B981',
+    borderColor: '#10B981',
+  },
+  modalActionButtonText: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#10B981',
   },
