@@ -85,7 +85,7 @@ export default function PlanTripScreen() {
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.formContainer}>
           <View style={styles.header}>
             <MaterialCommunityIcons name="routes" size={40} color="#10B981" />
-            <Text style={styles.headerTitle}>Plan Your Sarawak Trip</Text>
+            <Text style={styles.headerTitle}>AI Planner</Text>
             <Text style={styles.headerSubtitle}>
               Let AI create a personalized itinerary for you
             </Text>
