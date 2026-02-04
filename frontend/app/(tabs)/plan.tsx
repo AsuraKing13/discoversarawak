@@ -38,6 +38,7 @@ export default function PlanTripScreen() {
   const [selectedBudget, setSelectedBudget] = useState<string>('medium');
   const [generating, setGenerating] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<string | null>(null);
+  const [showResultsModal, setShowResultsModal] = useState(false);
 
   const toggleInterest = (interest: string) => {
     if (selectedInterests.includes(interest)) {
@@ -64,6 +65,7 @@ export default function PlanTripScreen() {
       );
       
       setGeneratedItinerary(result.itinerary);
+      setShowResultsModal(true);
     } catch (error) {
       Alert.alert('Error', 'Failed to generate itinerary. Please try again.');
       console.error('Error generating itinerary:', error);
@@ -72,7 +74,12 @@ export default function PlanTripScreen() {
     }
   };
 
-  const handleReset = () => {
+  const handleCloseModal = () => {
+    setShowResultsModal(false);
+  };
+
+  const handleNewItinerary = () => {
+    setShowResultsModal(false);
     setGeneratedItinerary(null);
     setSelectedInterests([]);
     setSelectedDuration(3);
