@@ -41,7 +41,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="plan"
         options={{
-          title: 'Plan Trip',
+          title: 'AI Planner',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="routes" size={size} color={color} />
           ),
