@@ -88,167 +88,193 @@ export default function PlanTripScreen() {
 
   return (
     <View style={styles.container}>
-      {!generatedItinerary ? (
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.formContainer}>
-          <View style={styles.header}>
-            <MaterialCommunityIcons name="routes" size={40} color="#10B981" />
-            <Text style={styles.headerTitle}>AI Planner</Text>
-            <Text style={styles.headerSubtitle}>
-              Let AI create a personalized itinerary for you
-            </Text>
-          </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.formContainer}>
+        <View style={styles.header}>
+          <MaterialCommunityIcons name="routes" size={40} color="#10B981" />
+          <Text style={styles.headerTitle}>AI Planner</Text>
+          <Text style={styles.headerSubtitle}>
+            Let AI create a personalized itinerary for you
+          </Text>
+        </View>
 
-          {/* Interests Selection */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              <Ionicons name="heart" size={20} color="#10B981" /> What interests you?
-            </Text>
-            <Text style={styles.sectionDesc}>Select one or more interests</Text>
-            
-            <View style={styles.interestsGrid}>
-              {INTERESTS.map((interest) => (
-                <TouchableOpacity
-                  key={interest}
+        {/* Interests Selection */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            <Ionicons name="heart" size={20} color="#10B981" /> What interests you?
+          </Text>
+          <Text style={styles.sectionDesc}>Select one or more interests</Text>
+          
+          <View style={styles.interestsGrid}>
+            {INTERESTS.map((interest) => (
+              <TouchableOpacity
+                key={interest}
+                style={[
+                  styles.interestCard,
+                  selectedInterests.includes(interest) && styles.interestCardActive,
+                  {
+                    borderColor: CLUSTER_COLORS[interest] || '#6B7280',
+                    backgroundColor: selectedInterests.includes(interest)
+                      ? `${CLUSTER_COLORS[interest]}20`
+                      : '#1F2937',
+                  },
+                ]}
+                onPress={() => toggleInterest(interest)}
+              >
+                {selectedInterests.includes(interest) && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={CLUSTER_COLORS[interest]}
+                    style={styles.checkmark}
+                  />
+                )}
+                <Text
                   style={[
-                    styles.interestCard,
-                    selectedInterests.includes(interest) && styles.interestCardActive,
-                    {
-                      borderColor: CLUSTER_COLORS[interest] || '#6B7280',
-                      backgroundColor: selectedInterests.includes(interest)
-                        ? `${CLUSTER_COLORS[interest]}20`
-                        : '#1F2937',
+                    styles.interestText,
+                    selectedInterests.includes(interest) && {
+                      color: CLUSTER_COLORS[interest],
                     },
                   ]}
-                  onPress={() => toggleInterest(interest)}
                 >
-                  {selectedInterests.includes(interest) && (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={20}
-                      color={CLUSTER_COLORS[interest]}
-                      style={styles.checkmark}
-                    />
-                  )}
-                  <Text
-                    style={[
-                      styles.interestText,
-                      selectedInterests.includes(interest) && {
-                        color: CLUSTER_COLORS[interest],
-                      },
-                    ]}
-                  >
-                    {interest}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {interest}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
+        </View>
 
-          {/* Duration Selection */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              <Ionicons name="calendar" size={20} color="#10B981" /> Trip Duration
-            </Text>
-            <Text style={styles.sectionDesc}>How long is your trip?</Text>
-            
-            <View style={styles.durationGrid}>
-              {DURATIONS.map((duration) => (
-                <TouchableOpacity
-                  key={duration.value}
+        {/* Duration Selection */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            <Ionicons name="calendar" size={20} color="#10B981" /> Trip Duration
+          </Text>
+          <Text style={styles.sectionDesc}>How long is your trip?</Text>
+          
+          <View style={styles.durationGrid}>
+            {DURATIONS.map((duration) => (
+              <TouchableOpacity
+                key={duration.value}
+                style={[
+                  styles.durationCard,
+                  selectedDuration === duration.value && styles.durationCardActive,
+                ]}
+                onPress={() => setSelectedDuration(duration.value)}
+              >
+                <Text
                   style={[
-                    styles.durationCard,
-                    selectedDuration === duration.value && styles.durationCardActive,
+                    styles.durationText,
+                    selectedDuration === duration.value && styles.durationTextActive,
                   ]}
-                  onPress={() => setSelectedDuration(duration.value)}
                 >
-                  <Text
-                    style={[
-                      styles.durationText,
-                      selectedDuration === duration.value && styles.durationTextActive,
-                    ]}
-                  >
-                    {duration.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {duration.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
+        </View>
 
-          {/* Budget Selection */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              <Ionicons name="wallet" size={20} color="#10B981" /> Budget Level
-            </Text>
-            <Text style={styles.sectionDesc}>What's your budget?</Text>
-            
-            <View style={styles.budgetContainer}>
-              {BUDGETS.map((budget) => (
-                <TouchableOpacity
-                  key={budget.value}
+        {/* Budget Selection */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            <Ionicons name="wallet" size={20} color="#10B981" /> Budget Level
+          </Text>
+          <Text style={styles.sectionDesc}>What's your budget?</Text>
+          
+          <View style={styles.budgetContainer}>
+            {BUDGETS.map((budget) => (
+              <TouchableOpacity
+                key={budget.value}
+                style={[
+                  styles.budgetCard,
+                  selectedBudget === budget.value && styles.budgetCardActive,
+                ]}
+                onPress={() => setSelectedBudget(budget.value)}
+              >
+                <Text
                   style={[
-                    styles.budgetCard,
-                    selectedBudget === budget.value && styles.budgetCardActive,
+                    styles.budgetLabel,
+                    selectedBudget === budget.value && styles.budgetLabelActive,
                   ]}
-                  onPress={() => setSelectedBudget(budget.value)}
                 >
-                  <Text
-                    style={[
-                      styles.budgetLabel,
-                      selectedBudget === budget.value && styles.budgetLabelActive,
-                    ]}
-                  >
-                    {budget.label}
-                  </Text>
-                  <Text style={styles.budgetDesc}>{budget.desc}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {budget.label}
+                </Text>
+                <Text style={styles.budgetDesc}>{budget.desc}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
+        </View>
 
-          {/* Generate Button */}
-          <TouchableOpacity
-            style={[styles.generateButton, generating && styles.generateButtonDisabled]}
-            onPress={handleGenerateItinerary}
-            disabled={generating}
-          >
-            {generating ? (
-              <>
-                <ActivityIndicator size="small" color="#fff" />
-                <Text style={styles.generateButtonText}>Generating...</Text>
-              </>
-            ) : (
-              <>
-                <MaterialCommunityIcons name="magic-staff" size={20} color="#fff" />
-                <Text style={styles.generateButtonText}>Generate Itinerary</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-      ) : (
-        <View style={styles.resultContainer}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.resultContent}
-          >
-            <View style={styles.resultHeader}>
-              <Ionicons name="checkmark-circle" size={48} color="#10B981" />
-              <Text style={styles.resultTitle}>Your Personalized Itinerary</Text>
-              <Text style={styles.resultSubtitle}>
+        {/* Generate Button */}
+        <TouchableOpacity
+          style={[styles.generateButton, generating && styles.generateButtonDisabled]}
+          onPress={handleGenerateItinerary}
+          disabled={generating}
+        >
+          {generating ? (
+            <>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.generateButtonText}>Generating...</Text>
+            </>
+          ) : (
+            <>
+              <MaterialCommunityIcons name="magic-staff" size={20} color="#fff" />
+              <Text style={styles.generateButtonText}>Generate Itinerary</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Results Modal */}
+      <Modal
+        visible={showResultsModal}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+              <Ionicons name="close" size={28} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.modalHeaderContent}>
+              <Ionicons name="checkmark-circle" size={40} color="#10B981" />
+              <Text style={styles.modalTitle}>Your Personalized Itinerary</Text>
+              <Text style={styles.modalSubtitle}>
                 {selectedDuration} day{selectedDuration > 1 ? 's' : ''} • {selectedBudget} budget
               </Text>
             </View>
+          </View>
 
+          <ScrollView
+            style={styles.modalScrollView}
+            contentContainerStyle={styles.modalContent}
+          >
             <View style={styles.itineraryCard}>
               <Text style={styles.itineraryText}>{generatedItinerary}</Text>
             </View>
 
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-              <Ionicons name="refresh" size={20} color="#10B981" />
-              <Text style={styles.resetButtonText}>Plan Another Trip</Text>
-            </TouchableOpacity>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalActionButton}
+                onPress={handleCloseModal}
+              >
+                <Ionicons name="create" size={20} color="#10B981" />
+                <Text style={styles.modalActionButtonText}>Edit Preferences</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalActionButton, styles.modalActionButtonPrimary]}
+                onPress={handleNewItinerary}
+              >
+                <Ionicons name="refresh" size={20} color="#fff" />
+                <Text style={[styles.modalActionButtonText, { color: '#fff' }]}>
+                  Plan New Trip
+                </Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
-      )}
+      </Modal>
     </View>
   );
 }
