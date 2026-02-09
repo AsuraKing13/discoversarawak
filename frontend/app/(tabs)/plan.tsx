@@ -108,6 +108,14 @@ export default function PlanTripScreen() {
           <Text style={styles.headerSubtitle}>
             Let AI create a personalized itinerary for you
           </Text>
+          {remainingCount < 5 && (
+            <View style={styles.limitBadge}>
+              <Ionicons name="hourglass" size={16} color="#F59E0B" />
+              <Text style={styles.limitText}>
+                {remainingCount} {remainingCount === 1 ? 'itinerary' : 'itineraries'} remaining today
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Interests Selection */}
