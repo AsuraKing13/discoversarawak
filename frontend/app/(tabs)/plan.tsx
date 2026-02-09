@@ -328,6 +328,21 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
   },
+  limitBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 12,
+    gap: 6,
+  },
+  limitText: {
+    fontSize: 14,
+    color: '#F59E0B',
+    fontWeight: '600',
+  },
   section: {
     marginBottom: 32,
   },
