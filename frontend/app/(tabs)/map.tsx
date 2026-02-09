@@ -97,8 +97,8 @@ export default function MapScreen() {
   const generateMapHTML = () => {
     const markers = [];
     
-    // Add attractions
-    attractions.forEach((attraction) => {
+    // Add filtered attractions
+    filteredAttractions.forEach((attraction) => {
       if (attraction.latitude && attraction.longitude) {
         const color = attraction.categories[0]
           ? CLUSTER_COLORS[attraction.categories[0]] || CLUSTER_COLORS.All
@@ -115,9 +115,9 @@ export default function MapScreen() {
       }
     });
 
-    // Add events
+    // Add filtered events
     if (showEvents) {
-      events.forEach((event) => {
+      filteredEvents.forEach((event) => {
         if (event.latitude && event.longitude) {
           markers.push({
             lat: event.latitude,
@@ -137,10 +137,19 @@ export default function MapScreen() {
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
       <style>
         body { margin: 0; padding: 0; }
         #map { height: 100vh; width: 100vw; }
+        .marker-cluster-small { background-color: rgba(16, 185, 129, 0.6); }
+        .marker-cluster-small div { background-color: rgba(16, 185, 129, 0.8); }
+        .marker-cluster-medium { background-color: rgba(239, 68, 68, 0.6); }
+        .marker-cluster-medium div { background-color: rgba(239, 68, 68, 0.8); }
+        .marker-cluster-large { background-color: rgba(139, 92, 246, 0.6); }
+        .marker-cluster-large div { background-color: rgba(139, 92, 246, 0.8); }
       </style>
     </head>
     <body>
@@ -153,9 +162,17 @@ export default function MapScreen() {
           maxZoom: 19
         }).addTo(map);
 
-        var markers = ${JSON.stringify(markers)};
+        // Create marker cluster group
+        var markers = L.markerClusterGroup({
+          maxClusterRadius: 60,
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: false,
+          zoomToBoundsOnClick: true
+        });
+
+        var markerData = ${JSON.stringify(markers)};
         
-        markers.forEach(function(marker) {
+        markerData.forEach(function(marker) {
           var icon;
           if (marker.type === 'event') {
             icon = L.divIcon({
@@ -171,10 +188,13 @@ export default function MapScreen() {
             });
           }
           
-          L.marker([marker.lat, marker.lng], {icon: icon})
-            .addTo(map)
+          var leafletMarker = L.marker([marker.lat, marker.lng], {icon: icon})
             .bindPopup('<b>' + marker.title + '</b><br>' + marker.description);
+          
+          markers.addLayer(leafletMarker);
         });
+        
+        map.addLayer(markers);
       </script>
     </body>
     </html>
