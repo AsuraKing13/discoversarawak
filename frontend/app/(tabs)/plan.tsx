@@ -40,6 +40,7 @@ export default function PlanTripScreen() {
   const [generating, setGenerating] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<string | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
+  const [remainingCount, setRemainingCount] = useState<number>(5);
 
   const toggleInterest = (interest: string) => {
     if (selectedInterests.includes(interest)) {
@@ -67,8 +68,19 @@ export default function PlanTripScreen() {
       
       setGeneratedItinerary(result.itinerary);
       setShowResultsModal(true);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to generate itinerary. Please try again.');
+      
+      // Update remaining count
+      setRemainingCount(Math.max(0, remainingCount - 1));
+    } catch (error: any) {
+      if (error.response?.status === 429) {
+        Alert.alert(
+          'Daily Limit Reached',
+          'You have reached the maximum of 5 itineraries per day. Please try again tomorrow.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        Alert.alert('Error', 'Failed to generate itinerary. Please try again.');
+      }
       console.error('Error generating itinerary:', error);
     } finally {
       setGenerating(false);
