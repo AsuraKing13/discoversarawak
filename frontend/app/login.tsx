@@ -29,7 +29,7 @@ export default function LoginScreen() {
 
       // Build redirect URL
       const redirectUrl = Linking.createURL('/');
-      const authUrl = `${EMERGENT_AUTH_URL}?provider=google&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+      const authUrl = `${EMERGENT_AUTH_URL}?provider=google&redirect=${encodeURIComponent(redirectUrl)}`;
 
       // Open OAuth flow
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
