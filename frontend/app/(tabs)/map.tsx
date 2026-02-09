@@ -10,6 +10,7 @@ import {
   FlatList,
   Modal,
   Platform,
+  TextInput,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
