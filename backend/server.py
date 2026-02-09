@@ -480,6 +480,22 @@ async def health_check():
 async def generate_itinerary(request: ItineraryRequest):
     """Generate AI-powered personalized itinerary for Sarawak"""
     try:
+        # Determine user identifier (user_id or IP for guests)
+        user_identifier = request.user_id if request.user_id else "guest"
+        
+        # Check rate limit (5 itineraries per day)
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        today_count = await db.itineraries.count_documents({
+            'user_id': user_identifier,
+            'created_at': {'$gte': today_start}
+        })
+        
+        if today_count >= 5:
+            raise HTTPException(
+                status_code=429,
+                detail="Daily limit reached. You can generate up to 5 itineraries per day. Please try again tomorrow."
+            )
+        
         # Get attractions based on interests
         query = {}
         if request.interests and len(request.interests) > 0:
@@ -559,7 +575,7 @@ Format the itinerary in a clear, organized manner with proper headings and bulle
         
         # Create itinerary response
         itinerary_obj = ItineraryResponse(
-            user_id=request.user_id,
+            user_id=user_identifier,
             itinerary=ai_response,
             interests=request.interests,
             duration=request.duration,
@@ -569,11 +585,44 @@ Format the itinerary in a clear, organized manner with proper headings and bulle
         # Save to database
         await db.itineraries.insert_one(itinerary_obj.dict(by_alias=True))
         
+        # Add remaining count to response
+        remaining_count = 5 - (today_count + 1)
+        logging.info(f"Itinerary generated for {user_identifier}. Remaining today: {remaining_count}")
+        
         return itinerary_obj
         
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"Error generating itinerary: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to generate itinerary: {str(e)}")
+
+@api_router.get("/itinerary/limit/{user_id}")
+async def check_itinerary_limit(user_id: str):
+    """Check remaining itinerary generation limit for today"""
+    try:
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        today_count = await db.itineraries.count_documents({
+            'user_id': user_id,
+            'created_at': {'$gte': today_start}
+        })
+        
+        remaining = max(0, 5 - today_count)
+        
+        return {
+            "daily_limit": 5,
+            "used_today": today_count,
+            "remaining_today": remaining,
+            "reset_time": (today_start + timedelta(days=1)).isoformat()
+        }
+    except Exception as e:
+        logging.error(f"Error checking limit: {e}")
+        return {
+            "daily_limit": 5,
+            "used_today": 0,
+            "remaining_today": 5,
+            "error": str(e)
+        }
 
 @api_router.get("/itinerary/{user_id}", response_model=List[ItineraryResponse])
 async def get_user_itineraries(user_id: str):
