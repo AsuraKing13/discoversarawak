@@ -193,8 +193,8 @@ async def get_current_user(
 
 @api_router.post("/auth/session")
 async def create_session(
-    session_id: str,
-    response: Response
+    session_id: str = Query(..., description="Session ID from OAuth callback"),
+    response: Response = None
 ):
     """Exchange session_id for session_token and user data"""
     try:
