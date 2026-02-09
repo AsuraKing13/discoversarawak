@@ -568,6 +568,26 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 4,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#374151',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginTop: 12,
+    height: 48,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 16,
+  },
+  clearButton: {
+    padding: 4,
+  },
   controlsContainer: {
     backgroundColor: '#1F2937',
     flexDirection: 'row',
