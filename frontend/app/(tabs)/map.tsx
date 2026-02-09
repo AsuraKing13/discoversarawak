@@ -40,10 +40,37 @@ export default function MapScreen() {
   const [selectedItem, setSelectedItem] = useState<MapMarker | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'grid'>('map');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredAttractions, setFilteredAttractions] = useState<Attraction[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     loadData();
   }, [selectedCluster]);
+
+  useEffect(() => {
+    // Filter attractions and events based on search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      setFilteredAttractions(
+        attractions.filter((a) =>
+          a.name.toLowerCase().includes(query) ||
+          a.location?.toLowerCase().includes(query) ||
+          a.description?.toLowerCase().includes(query)
+        )
+      );
+      setFilteredEvents(
+        events.filter((e) =>
+          e.title.toLowerCase().includes(query) ||
+          e.location_name?.toLowerCase().includes(query) ||
+          e.description?.toLowerCase().includes(query)
+        )
+      );
+    } else {
+      setFilteredAttractions(attractions);
+      setFilteredEvents(events);
+    }
+  }, [searchQuery, attractions, events]);
 
   const loadData = async () => {
     setLoading(true);
