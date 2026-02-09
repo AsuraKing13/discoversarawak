@@ -424,8 +424,24 @@ export default function MapScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Discover Sarawak</Text>
         <Text style={styles.headerSubtitle}>
-          {attractions.length} attractions {showEvents && `• ${events.length} events`}
+          {filteredAttractions.length} attractions {showEvents && `• ${filteredEvents.length} events`}
         </Text>
+        
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search attractions, events, locations..."
+            placeholderTextColor="#6B7280"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.controlsContainer}>
