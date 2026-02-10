@@ -27,15 +27,15 @@ print('User ID: ' + visitorId);
 ## Step 2: Test Backend API
 ```bash
 # Test auth endpoint
-curl -X GET "https://discover-sarawak.preview.emergentagent.com/api/auth/me" \
+curl -X GET "https://tourism-hub-12.preview.emergentagent.com/api/auth/me" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 
 # Test protected endpoints (favorites)
-curl -X GET "https://discover-sarawak.preview.emergentagent.com/api/favorites/YOUR_USER_ID" \
+curl -X GET "https://tourism-hub-12.preview.emergentagent.com/api/favorites/YOUR_USER_ID" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 
 # Test itinerary generation with auth
-curl -X POST "https://discover-sarawak.preview.emergentagent.com/api/itinerary/generate" \
+curl -X POST "https://tourism-hub-12.preview.emergentagent.com/api/itinerary/generate" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN" \
   -d '{"interests": ["Culture", "Nature"], "duration": 3, "budget": "medium", "user_id": "YOUR_USER_ID"}'
@@ -53,7 +53,7 @@ await page.context.addCookies([{
     "secure": true,
     "sameSite": "None"
 }]);
-await page.goto("https://discover-sarawak.preview.emergentagent.com");
+await page.goto("https://tourism-hub-12.preview.emergentagent.com");
 ```
 
 ## MongoDB ID Handling Rules
