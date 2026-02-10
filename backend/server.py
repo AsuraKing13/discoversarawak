@@ -389,6 +389,147 @@ async def get_analytics(
     analytics = await db.visitor_analytics.find(query).to_list(10000)
     return [VisitorAnalytics(**record) for record in analytics]
 
+@api_router.get("/analytics/summary")
+async def get_analytics_summary():
+    """Get analytics summary with yearly totals and top countries"""
+    try:
+        # Get yearly totals
+        yearly_pipeline = [
+            {'$group': {
+                '_id': '$year',
+                'total_visitors': {'$sum': '$count'},
+                'domestic': {'$sum': {'$cond': [{'$eq': ['$visitor_type', 'Domestic']}, '$count', 0]}},
+                'international': {'$sum': {'$cond': [{'$eq': ['$visitor_type', 'International']}, '$count', 0]}}
+            }},
+            {'$sort': {'_id': 1}}
+        ]
+        yearly_stats = await db.visitor_analytics.aggregate(yearly_pipeline).to_list(20)
+        
+        # Get available years
+        years = [item['_id'] for item in yearly_stats]
+        
+        # Get top source countries (all time)
+        top_countries_pipeline = [
+            {'$match': {'visitor_type': 'International'}},
+            {'$group': {'_id': '$country', 'total': {'$sum': '$count'}}},
+            {'$sort': {'total': -1}},
+            {'$limit': 10}
+        ]
+        top_countries = await db.visitor_analytics.aggregate(top_countries_pipeline).to_list(10)
+        
+        # Get total records count
+        total_records = await db.visitor_analytics.count_documents({})
+        
+        return {
+            'available_years': years,
+            'yearly_stats': yearly_stats,
+            'top_countries': top_countries,
+            'total_records': total_records
+        }
+    except Exception as e:
+        logging.error(f"Error getting analytics summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/analytics/year/{year}")
+async def get_yearly_analytics(year: int):
+    """Get detailed analytics for a specific year"""
+    try:
+        # Monthly breakdown
+        monthly_pipeline = [
+            {'$match': {'year': year}},
+            {'$group': {
+                '_id': '$month',
+                'total': {'$sum': '$count'},
+                'domestic': {'$sum': {'$cond': [{'$eq': ['$visitor_type', 'Domestic']}, '$count', 0]}},
+                'international': {'$sum': {'$cond': [{'$eq': ['$visitor_type', 'International']}, '$count', 0]}}
+            }},
+            {'$sort': {'_id': 1}}
+        ]
+        monthly_stats = await db.visitor_analytics.aggregate(monthly_pipeline).to_list(12)
+        
+        # Top countries for the year
+        countries_pipeline = [
+            {'$match': {'year': year, 'visitor_type': 'International'}},
+            {'$group': {'_id': '$country', 'total': {'$sum': '$count'}}},
+            {'$sort': {'total': -1}},
+            {'$limit': 15}
+        ]
+        top_countries = await db.visitor_analytics.aggregate(countries_pipeline).to_list(15)
+        
+        # Domestic sources
+        domestic_pipeline = [
+            {'$match': {'year': year, 'visitor_type': 'Domestic'}},
+            {'$group': {'_id': '$country', 'total': {'$sum': '$count'}}},
+            {'$sort': {'total': -1}}
+        ]
+        domestic_sources = await db.visitor_analytics.aggregate(domestic_pipeline).to_list(10)
+        
+        # Year totals
+        total_pipeline = [
+            {'$match': {'year': year}},
+            {'$group': {
+                '_id': None,
+                'total': {'$sum': '$count'},
+                'domestic': {'$sum': {'$cond': [{'$eq': ['$visitor_type', 'Domestic']}, '$count', 0]}},
+                'international': {'$sum': {'$cond': [{'$eq': ['$visitor_type', 'International']}, '$count', 0]}}
+            }}
+        ]
+        totals = await db.visitor_analytics.aggregate(total_pipeline).to_list(1)
+        year_total = totals[0] if totals else {'total': 0, 'domestic': 0, 'international': 0}
+        
+        return {
+            'year': year,
+            'totals': {
+                'total': year_total.get('total', 0),
+                'domestic': year_total.get('domestic', 0),
+                'international': year_total.get('international', 0)
+            },
+            'monthly_stats': monthly_stats,
+            'top_countries': top_countries,
+            'domestic_sources': domestic_sources
+        }
+    except Exception as e:
+        logging.error(f"Error getting yearly analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/analytics/compare")
+async def compare_years(
+    year1: int = Query(..., description="First year to compare"),
+    year2: int = Query(..., description="Second year to compare")
+):
+    """Compare analytics between two years"""
+    try:
+        async def get_year_data(year):
+            pipeline = [
+                {'$match': {'year': year}},
+                {'$group': {
+                    '_id': '$month',
+                    'total': {'$sum': '$count'},
+                    'domestic': {'$sum': {'$cond': [{'$eq': ['$visitor_type', 'Domestic']}, '$count', 0]}},
+                    'international': {'$sum': {'$cond': [{'$eq': ['$visitor_type', 'International']}, '$count', 0]}}
+                }},
+                {'$sort': {'_id': 1}}
+            ]
+            return await db.visitor_analytics.aggregate(pipeline).to_list(12)
+        
+        year1_data = await get_year_data(year1)
+        year2_data = await get_year_data(year2)
+        
+        # Calculate totals
+        year1_total = sum(m['total'] for m in year1_data)
+        year2_total = sum(m['total'] for m in year2_data)
+        
+        growth_rate = ((year2_total - year1_total) / year1_total * 100) if year1_total > 0 else 0
+        
+        return {
+            'year1': {'year': year1, 'monthly': year1_data, 'total': year1_total},
+            'year2': {'year': year2, 'monthly': year2_data, 'total': year2_total},
+            'growth_rate': round(growth_rate, 2)
+        }
+    except Exception as e:
+        logging.error(f"Error comparing years: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Public holidays endpoints
 @api_router.get("/holidays", response_model=List[PublicHoliday])
 async def get_holidays(
