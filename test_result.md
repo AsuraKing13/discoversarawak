@@ -201,6 +201,42 @@ backend:
           agent: "testing"
           comment: "Holidays endpoint working correctly. Retrieved 18 holidays with proper structure including date and name fields. Year filtering also tested successfully"
 
+  - task: "Visitor Analytics Summary API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Analytics summary endpoint working. Returns yearly stats (2021-2025), top source countries, and total records (652). Data imported from 5 CSV files."
+
+  - task: "Visitor Analytics Yearly Detail API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Yearly analytics endpoint working. Returns monthly breakdown, top countries, domestic sources, and year totals."
+
+  - task: "Visitor Analytics Compare API"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "Year comparison endpoint implemented. Compares monthly data between two selected years with growth rate calculation."
+
   - task: "Individual Attraction Retrieval"
     implemented: true
     working: true
