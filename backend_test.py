@@ -10,7 +10,7 @@ from datetime import datetime
 import sys
 
 # Get backend URL from frontend .env
-BACKEND_URL = "https://discover-sarawak.preview.emergentagent.com/api"
+BACKEND_URL = "https://tourism-hub-12.preview.emergentagent.com/api"
 
 class SarawakAPITester:
     def __init__(self):

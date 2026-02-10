@@ -10,6 +10,7 @@ import {
   FlatList,
   Modal,
   Platform,
+  TextInput,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
@@ -39,10 +40,37 @@ export default function MapScreen() {
   const [selectedItem, setSelectedItem] = useState<MapMarker | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'grid'>('map');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredAttractions, setFilteredAttractions] = useState<Attraction[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     loadData();
   }, [selectedCluster]);
+
+  useEffect(() => {
+    // Filter attractions and events based on search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      setFilteredAttractions(
+        attractions.filter((a) =>
+          a.name.toLowerCase().includes(query) ||
+          a.location?.toLowerCase().includes(query) ||
+          a.description?.toLowerCase().includes(query)
+        )
+      );
+      setFilteredEvents(
+        events.filter((e) =>
+          e.title.toLowerCase().includes(query) ||
+          e.location_name?.toLowerCase().includes(query) ||
+          e.description?.toLowerCase().includes(query)
+        )
+      );
+    } else {
+      setFilteredAttractions(attractions);
+      setFilteredEvents(events);
+    }
+  }, [searchQuery, attractions, events]);
 
   const loadData = async () => {
     setLoading(true);
@@ -69,8 +97,8 @@ export default function MapScreen() {
   const generateMapHTML = () => {
     const markers = [];
     
-    // Add attractions
-    attractions.forEach((attraction) => {
+    // Add filtered attractions
+    filteredAttractions.forEach((attraction) => {
       if (attraction.latitude && attraction.longitude) {
         const color = attraction.categories[0]
           ? CLUSTER_COLORS[attraction.categories[0]] || CLUSTER_COLORS.All
@@ -87,9 +115,9 @@ export default function MapScreen() {
       }
     });
 
-    // Add events
+    // Add filtered events
     if (showEvents) {
-      events.forEach((event) => {
+      filteredEvents.forEach((event) => {
         if (event.latitude && event.longitude) {
           markers.push({
             lat: event.latitude,
@@ -109,10 +137,19 @@ export default function MapScreen() {
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
       <style>
         body { margin: 0; padding: 0; }
         #map { height: 100vh; width: 100vw; }
+        .marker-cluster-small { background-color: rgba(16, 185, 129, 0.6); }
+        .marker-cluster-small div { background-color: rgba(16, 185, 129, 0.8); }
+        .marker-cluster-medium { background-color: rgba(239, 68, 68, 0.6); }
+        .marker-cluster-medium div { background-color: rgba(239, 68, 68, 0.8); }
+        .marker-cluster-large { background-color: rgba(139, 92, 246, 0.6); }
+        .marker-cluster-large div { background-color: rgba(139, 92, 246, 0.8); }
       </style>
     </head>
     <body>
@@ -125,9 +162,17 @@ export default function MapScreen() {
           maxZoom: 19
         }).addTo(map);
 
-        var markers = ${JSON.stringify(markers)};
+        // Create marker cluster group
+        var markers = L.markerClusterGroup({
+          maxClusterRadius: 60,
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: false,
+          zoomToBoundsOnClick: true
+        });
+
+        var markerData = ${JSON.stringify(markers)};
         
-        markers.forEach(function(marker) {
+        markerData.forEach(function(marker) {
           var icon;
           if (marker.type === 'event') {
             icon = L.divIcon({
@@ -143,10 +188,13 @@ export default function MapScreen() {
             });
           }
           
-          L.marker([marker.lat, marker.lng], {icon: icon})
-            .addTo(map)
+          var leafletMarker = L.marker([marker.lat, marker.lng], {icon: icon})
             .bindPopup('<b>' + marker.title + '</b><br>' + marker.description);
+          
+          markers.addLayer(leafletMarker);
         });
+        
+        map.addLayer(markers);
       </script>
     </body>
     </html>
@@ -376,8 +424,24 @@ export default function MapScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Discover Sarawak</Text>
         <Text style={styles.headerSubtitle}>
-          {attractions.length} attractions {showEvents && `• ${events.length} events`}
+          {filteredAttractions.length} attractions {showEvents && `• ${filteredEvents.length} events`}
         </Text>
+        
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search attractions, events, locations..."
+            placeholderTextColor="#6B7280"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
+              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.controlsContainer}>
@@ -503,6 +567,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9CA3AF',
     marginTop: 4,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#374151',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginTop: 12,
+    height: 48,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 16,
+  },
+  clearButton: {
+    padding: 4,
   },
   controlsContainer: {
     backgroundColor: '#1F2937',

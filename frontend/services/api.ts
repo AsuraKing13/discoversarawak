@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { Attraction, Event, VisitorAnalytics, PublicHoliday, Favorite } from '../types';
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://discover-sarawak.preview.emergentagent.com';
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://tourism-hub-12.preview.emergentagent.com';
 const API_BASE = `${BACKEND_URL}/api`;
 
 const api = axios.create({

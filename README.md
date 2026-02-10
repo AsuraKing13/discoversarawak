@@ -337,7 +337,7 @@ All data imported from CSV files provided:
 
 ## 📝 **Development Notes**
 
-- **Backend URL:** `https://discover-sarawak.preview.emergentagent.com/api`
+- **Backend URL:** `https://tourism-hub-12.preview.emergentagent.com/api`
 - **Environment Variables:** Located in `.env` files (DO NOT commit)
 - **MongoDB:** Local instance, data persists across restarts
 - **Image Storage:** `/backend/static/images/` (served at `/static/images/`)
